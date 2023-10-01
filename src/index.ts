@@ -1,15 +1,20 @@
 import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
-import pkg from 'pmtiles';
-const { PMTiles } = pkg;
+import { Buffer } from 'node:buffer';
 
+import { PMTiles } from 'pmtiles';
 import type { LayerSpecification } from 'maplibre-gl';
 
-import { getPresignedUrl, listObjects } from './s3';
+import { initS3, getPresignedUrl, listObjects } from './s3';
 
 const app = new Hono();
 
 app.get('/health', (c) => c.text('ok'));
+
+app.use('/tiles/*', async (c, next) => {
+    // inject envs
+    initS3(c.env);
+    await next();
+});
 
 app.get('/tiles', async (c) => {
     const data = await listObjects();
@@ -129,11 +134,11 @@ app.get('/tiles/:id/:z/:x/:y', async (c) => {
 
     const pmtiles = new PMTiles(url);
     const tile = await pmtiles.getZxy(z, x, y);
+
     if (tile === undefined) return c.text('tile not found', 404);
     return c.body(Buffer.from(tile.data), 200, {
         'Content-Type': 'application/vnd.mapbox-vector-tile',
     });
 });
 
-export default app;
-serve(app);
+export default app; // cloudflare workers
