@@ -1,4 +1,6 @@
 node_modules
+node_modules_docker
 dist
 lambda.zip
 .yarn
+.dev.vars

@@ -5,13 +5,16 @@ services:
             - 3000:3000
         volumes:
             - .:/app
+            - ./node_modules_docker:/app/node_modules
         working_dir: /app
         environment:
-            - LITILER_BUCKET_REGION=ap-northeast-1
-            - LITILER_BUCKET_NAME=pmtiles
-            - LITILER_BUCKET_ENDPOINT=http://minio:9000
-            - LITILER_BUCKET_ACCESSKEYID=minioadmin
-            - LITILER_BUCKET_SECRETACCESSKEY=minioadmin
+            - LITILER_S3_REGION=ap-northeast-1
+            - LITILER_S3_BUCKET=pmtiles
+            - LITILER_S3_ENDPOINT=http://minio:9000
+            - ACCESS_KEY_ID=minioadmin
+            - SECRET_ACCESS_KEY=minioadmin
+            - LITILER_USING_MINIO=true
+            - LITILER_USING_NODEJS=true
         command: sh -c "npm install && npm run dev"
     minio:
         image: minio/minio:latest

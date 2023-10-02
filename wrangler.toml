@@ -1,18 +1,4 @@
 name = "my-app"
-compatibility_date = "2023-01-01"
-
-# [vars]
-# MY_VARIABLE = "production_value"
-
-# [[kv_namespaces]]
-# binding = "MY_KV_NAMESPACE"
-# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-# [[r2_buckets]]
-# binding = "MY_BUCKET"
-# bucket_name = "my-bucket"
-
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "my-database"
-# database_id = ""
+compatibility_date = "2023-08-15"
+account_id = "6eb1227b3a9b6741c4d77f9a30147514"
+compatibility_flags = [ "nodejs_compat" ]

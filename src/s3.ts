@@ -13,18 +13,18 @@ type S3Options = {
     endpoint?: string;
 };
 function getS3Options(env: any): S3Options {
-    if (env.LITILER_BUCKET_REGION === undefined)
+    if (env.LITILER_S3_REGION === undefined)
         throw new Error('S3 options are not set');
-    if (env.LITILER_BUCKET_NAME === undefined)
+    if (env.LITILER_S3_BUCKET === undefined)
         throw new Error('S3 options are not set');
 
     const options: S3Options = {
-        region: env.LITILER_BUCKET_REGION,
-        bucket: env.LITILER_BUCKET_NAME,
+        region: env.LITILER_S3_REGION,
+        bucket: env.LITILER_S3_BUCKET,
     };
 
-    if (env.LITILER_BUCKET_ENDPOINT !== undefined) {
-        options.endpoint = env.LITILER_BUCKET_ENDPOINT;
+    if (env.LITILER_S3_ENDPOINT !== undefined) {
+        options.endpoint = env.LITILER_S3_ENDPOINT;
     }
 
     return options as S3Options;
@@ -55,12 +55,10 @@ async function listObjects(): Promise<string[]> {
 }
 
 async function getPresignedUrl(tile_id: string) {
-    console.log('AAA', s3Options);
     const cmd = new GetObjectCommand({
         Bucket: s3Options.bucket,
         Key: tile_id + '.pmtiles',
     });
-    console.log(cmd);
     const url = getSignedUrl(s3Client, cmd, { expiresIn: 60 });
     return url;
 }
@@ -77,7 +75,7 @@ function getS3Client(env: any) {
             },
             endpoint: s3Options.endpoint,
         };
-        if (s3Options.endpoint === 'http://minio:9000') {
+        if (env.LITILER_USING_MINIO === 'true') {
             // when local
             s3ClientConfig.forcePathStyle = true; // special option for minio
         }
