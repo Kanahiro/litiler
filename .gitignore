@@ -4,3 +4,5 @@ dist
 lambda.zip
 .yarn
 .dev.vars
+wrangler.toml
+.wrangler
