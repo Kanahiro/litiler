@@ -59,7 +59,7 @@ async function getPresignedUrl(tile_id: string) {
         Bucket: s3Options.bucket,
         Key: tile_id + '.pmtiles',
     });
-    const url = getSignedUrl(s3Client, cmd, { expiresIn: 60 });
+    const url = getSignedUrl(s3Client, cmd, { expiresIn: 600 });
     return url;
 }
 
@@ -75,10 +75,6 @@ function getS3Client(env: any) {
             },
             endpoint: s3Options.endpoint,
         };
-        if (env.LITILER_USING_MINIO === 'true') {
-            // when local
-            s3ClientConfig.forcePathStyle = true; // special option for minio
-        }
     }
     const s3Client = new S3Client(s3ClientConfig);
     return s3Client;
