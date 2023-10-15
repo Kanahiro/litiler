@@ -5,8 +5,8 @@
     "build": "esbuild --bundle --outfile=./dist/index.cjs --platform=node --target=node18 ./src/index.ts",
     "zip": "zip -j lambda.zip dist/index.cjs",
     "dev": "npm run build && node dist/index.cjs",
-    "wrangler:dev": "wrangler dev src/workers.ts",
-    "wrangler:deploy": "wrangler deploy --minify src/workers.ts"
+    "wrangler:dev": "wrangler dev src/server.ts",
+    "wrangler:deploy": "wrangler deploy --minify src/server.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.421.0",
