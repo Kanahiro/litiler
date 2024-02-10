@@ -1,29 +1,26 @@
 import { Hono } from 'hono';
-import { cache } from 'hono/cache';
-import { compress } from 'hono/compress';
 import { Buffer } from 'node:buffer';
-
 import { PMTiles } from 'pmtiles';
 import type { LayerSpecification } from 'maplibre-gl';
 
-import { initS3, getPresignedUrl, listObjects } from './s3';
+import { getPresignedUrl, listObjects } from './s3';
 
-type Bindings = {
-    PMTILES_KV: KVNamespace;
-    LITILER_PMTILES_HOST: string;
-};
+const app = new Hono();
 
-const app = new Hono<{ Bindings: Bindings }>();
+const pmtiles_cache: Record<string, PMTiles> = {};
+
+async function getPmtilesInstance(id: string) {
+    if (pmtiles_cache[id]) return pmtiles_cache[id];
+
+    const url = await getPresignedUrl(id);
+    const pmtiles = new PMTiles(url);
+    pmtiles_cache[id] = pmtiles;
+    return pmtiles;
+}
 
 app.get('/health', (c) => c.text('ok'));
 
-app.use('/*', async (c, next) => {
-    // inject envs
-    initS3(c.env);
-    await next();
-});
-
-app.get('/', cache({ cacheName: 'root' }), async (c) => {
+app.get('/', async (c) => {
     const data = await listObjects();
     return c.html(`<!DOCTYPE html>
     <html>
@@ -38,19 +35,16 @@ app.get('/', cache({ cacheName: 'root' }), async (c) => {
     </html>`);
 });
 
-app.get('/tiles', cache({ cacheName: 'tiles-list' }), async (c) => {
+app.get('/tiles', async (c) => {
     const data = await listObjects();
     return c.json(data);
 });
 
-app.get('/tiles/:id', cache({ cacheName: 'tiles-detail' }), async (c) => {
-    const v = (await c.env.PMTILES_KV?.get(c.req.url)) ?? null;
-    if (v !== null) return c.html(v);
+app.get('/tiles/:id', async (c) => {
     // HTML
     const id = c.req.param('id');
-    const url = await getPresignedUrl(id);
-    const pmtiles = new PMTiles(url);
-    const metadata = await pmtiles.getMetadata();
+    const pmtiles = await getPmtilesInstance(id);
+    const metadata = (await pmtiles.getMetadata()) as any;
 
     const zoomlevels: {
         [layerId: string]: { maxzoom: number; minzoom: number };
@@ -139,64 +133,44 @@ app.get('/tiles/:id', cache({ cacheName: 'tiles-detail' }), async (c) => {
             </script>
         </body>
     </html>`;
-    c.executionCtx.waitUntil(
-        c.env.PMTILES_KV?.put(c.req.url, html, {
-            expirationTtl: 600,
-        }),
-    );
 
     return c.html(html);
 });
 
-app.get(
-    '/tiles/:id/metadata.json',
-    cache({ cacheName: 'tiles-metadata' }),
-    async (c) => {
-        const v = (await c.env.PMTILES_KV?.get(c.req.url)) ?? null;
-        if (v !== null) return c.json(JSON.parse(v));
+app.get('/tiles/:id/metadata.json', async (c) => {
+    const id = c.req.param('id');
+    const pmtiles = await getPmtilesInstance(id);
+    const metadata = await pmtiles.getMetadata();
+    return c.json(metadata);
+});
 
-        const id = c.req.param('id');
-        const url = await getPresignedUrl(id);
-        const pmtiles = new PMTiles(url);
-        const metadata = await pmtiles.getMetadata();
-        c.executionCtx.waitUntil(
-            c.env.PMTILES_KV?.put(c.req.url, JSON.stringify(metadata), {
-                expirationTtl: 600,
-            }),
-        );
-        return c.json(metadata);
-    },
-);
+app.get('/tiles/:id/tiles.json', async (c) => {
+    const id = c.req.param('id');
+    // make tiles.json data
+    const pmtiles = await getPmtilesInstance(id);
+    const metadata = (await pmtiles.getMetadata()) as any;
+    const tilesjson = {
+        tilejson: '3.0.0',
+        tiles: [`${process.env.LITILER_HOST}/tiles/${id}/{z}/{x}/{y}`],
+        vector_layers: metadata.vector_layers,
+    };
+    return c.json(tilesjson);
+});
 
-app.get('/tiles/:id/:z/:x/:y', cache({ cacheName: 'tiles-xyz' }), async (c) => {
-    const v =
-        (await c.env.PMTILES_KV?.get(c.req.url, { type: 'arrayBuffer' })) ??
-        null;
-    if (v !== null)
-        return c.body(Buffer.from(v), 200, {
-            'Content-Type': 'application/vnd.mapbox-vector-tile',
-        });
-
+app.get('/tiles/:id/:z/:x/:y', async (c) => {
     const id = c.req.param('id');
     const z = Number(c.req.param('z'));
     const x = Number(c.req.param('x'));
     const y = Number(c.req.param('y'));
 
-    const url = await getPresignedUrl(id);
-    const pmtiles = new PMTiles(url);
+    const pmtiles = await getPmtilesInstance(id);
     const tile = await pmtiles.getZxy(z, x, y);
 
     if (tile === undefined) return c.text('tile not found', 404);
-    /**
-    c.executionCtx.waitUntil(
-        c.env.PMTILES_KV?.put(c.req.url, tile.data, {
-            expirationTtl: 60,
-        }),
-    );
-    */
+
     return c.body(Buffer.from(tile.data), 200, {
         'Content-Type': 'application/vnd.mapbox-vector-tile',
     });
 });
 
-export default app;
+export { app };
