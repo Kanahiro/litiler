@@ -2,18 +2,16 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "esbuild --bundle --outfile=./dist/index.cjs --platform=node --target=node18 ./src/index.ts",
+    "build": "esbuild --bundle --outfile=./dist/index.cjs --platform=node --target=node20 ./src/index.ts",
     "zip": "zip -j lambda.zip dist/index.cjs",
-    "dev": "npm run build && node dist/index.cjs",
-    "wrangler:dev": "wrangler dev src/server.ts",
-    "wrangler:deploy": "wrangler deploy --minify src/server.ts"
+    "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.421.0",
     "@aws-sdk/s3-request-presigner": "^3.421.0",
     "@hono/node-server": "^1.2.0",
     "hono": "^3.7.2",
-    "pmtiles": "^2.11.0"
+    "pmtiles": "^3.0.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231010.0",
@@ -22,7 +20,7 @@
     "maplibre-gl": "^3.3.1",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
-    "tsx": "^3.12.2",
+    "tsx": "^3.14.0",
     "wrangler": "^3.10.1"
   }
 }

@@ -4,13 +4,13 @@ import {
     S3Client,
     S3ClientConfig,
 } from '@aws-sdk/client-s3';
-
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 type S3Options = {
     region: string;
     bucket: string;
     endpoint?: string;
+    forcePathStyle?: boolean;
 };
 function getS3Options(env: any): S3Options {
     if (env.LITILER_S3_REGION === undefined)
@@ -25,6 +25,10 @@ function getS3Options(env: any): S3Options {
 
     if (env.LITILER_S3_ENDPOINT !== undefined) {
         options.endpoint = env.LITILER_S3_ENDPOINT;
+    }
+
+    if (env.DEVELOP === '1') {
+        options.forcePathStyle = true;
     }
 
     return options as S3Options;
@@ -59,7 +63,7 @@ async function getPresignedUrl(tile_id: string) {
         Bucket: s3Options.bucket,
         Key: tile_id + '.pmtiles',
     });
-    const url = getSignedUrl(s3Client, cmd, { expiresIn: 600 });
+    const url = getSignedUrl(s3Client, cmd, { expiresIn: 604800 });
     return url;
 }
 
@@ -70,10 +74,11 @@ function getS3Client(env: any) {
         s3ClientConfig = {
             region: s3Options.region,
             credentials: {
-                accessKeyId: env.ACCESS_KEY_ID!,
-                secretAccessKey: env.SECRET_ACCESS_KEY!,
+                accessKeyId: env.LITILER_ACCESS_KEY_ID!,
+                secretAccessKey: env.LITILER_SECRET_ACCESS_KEY!,
             },
             endpoint: s3Options.endpoint,
+            forcePathStyle: s3Options.forcePathStyle,
         };
     }
     const s3Client = new S3Client(s3ClientConfig);
