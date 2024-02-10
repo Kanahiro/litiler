@@ -6,3 +6,4 @@ lambda.zip
 .dev.vars
 wrangler.toml
 .wrangler
+.DS_Store
