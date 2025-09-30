@@ -1,22 +1,4 @@
 services:
-    app:
-        image: node:20-bullseye-slim
-        ports:
-            - 3000:3000
-        volumes:
-            - .:/app
-            - node_modules_docker:/app/node_modules
-        working_dir: /app
-        environment:
-            - LITILER_S3_REGION=ap-northeast-1
-            - LITILER_S3_BUCKET=pmtiles
-            - LITILER_HOST=http://localhost:3000
-            # for development
-            - DEVELOP=1
-            - LITILER_S3_ENDPOINT=http://minio:9000
-            - LITILER_ACCESS_KEY_ID=minioadmin
-            - LITILER_SECRET_ACCESS_KEY=minioadmin
-        command: sh -c "npm install && npm run dev"
     minio:
         image: minio/minio:latest
         ports:
@@ -28,19 +10,22 @@ services:
         command: server --console-address ":9001" /data
         healthcheck:
             test:
-                ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+                ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
             interval: 1s
             timeout: 20s
             retries: 3
     createbuckets:
         image: minio/mc:RELEASE.2022-12-24T15-21-38Z
         depends_on:
-            - minio
+            minio:
+                condition: service_healthy
         entrypoint: >
             /bin/sh -c "
-            mc alias set myminio http://minio:9000 minioadmin minioadmin;
+            until mc alias set myminio http://minio:9000 minioadmin minioadmin; do
+                sleep 1;
+            done;
             mc mb myminio/pmtiles;
             mc cp pmtiles/* myminio/pmtiles --recursive;
             "
         volumes:
-            - ./test/fixture:/pmtiles
+            - ./pmtiles:/pmtiles

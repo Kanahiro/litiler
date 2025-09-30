@@ -1,13 +1,13 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "esModuleInterop": true,
-        "strict": true,
-        "lib": ["esnext", "dom"],
-        "types": ["@cloudflare/workers-types"],
-        "jsx": "react-jsx",
-        "jsxImportSource": "hono/jsx"
-    }
+	"compilerOptions": {
+		"target": "es2024",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"esModuleInterop": true,
+		"strict": true,
+		"lib": ["esnext", "dom"],
+		"types": ["@types/node"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "hono/jsx"
+	}
 }
