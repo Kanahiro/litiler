@@ -6,6 +6,8 @@ Lite🪶, Lit🔥, Tiler🗺️ -> litiler
 - Lit: powered by [Hono](https://github.com/honojs/hono)
 - Tiler: accepts z/x/y requests and return tiles
 
+> for Cloudflare, use [litiler-cf](https://github.com/Kanahiro/litiler-cf)
+
 ## Local Development
 
 ```bash
