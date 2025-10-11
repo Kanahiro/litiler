@@ -43,6 +43,7 @@ export class CdkStack extends cdk.Stack {
 						),
 					cachePolicy: cdk.aws_cloudfront.CachePolicy.CACHING_OPTIMIZED,
 				},
+				httpVersion: cdk.aws_cloudfront.HttpVersion.HTTP2_AND_3,
 			},
 		);
 
