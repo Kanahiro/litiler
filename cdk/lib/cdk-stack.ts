@@ -22,6 +22,7 @@ export class CdkStack extends cdk.Stack {
 					LITILER_S3_BUCKET: pmtilesBucket.bucketName,
 					LITILER_S3_REGION: this.region,
 				},
+				timeout: cdk.Duration.seconds(15),
 			},
 		);
 
