@@ -1,10 +1,19 @@
-import { Hono } from 'hono';
+import { Hono } from 'hono/quick';
+import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 
 import { getPmtilesInstance } from './s3';
 
 const app = new Hono();
 app.get('/health', (c) => c.text('ok'));
+
+app.use(
+	'/tiles/:id/*',
+	cors({
+		origin: '*',
+		allowMethods: ['GET', 'HEAD', 'OPTIONS'],
+	}),
+);
 
 app.get('/tiles/:id/metadata.json', async (c) => {
 	const id = c.req.param('id');
